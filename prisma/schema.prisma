@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ScheduleStatus {
+  draft
+  pending
+  sent
+  finished
+}
+
+model Schedule {
+  id           Int            @id @default(autoincrement())
+  title        String
+  carType      String
+  description  String?
+  startAt      DateTime
+  endAt        DateTime
+  storeId      String
+  storeName    String
+  assignee     String
+  responsible  String
+  customerName String
+  requester    String
+  pdfNumber    String?        @unique
+  status       ScheduleStatus @default(draft)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  items        ScheduleItem[]
+}
+
+model ScheduleItem {
+  id          Int      @id @default(autoincrement())
+  scheduleId  Int
+  productId   String
+  productName String
+  quantity    Int
+  schedule    Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+}
