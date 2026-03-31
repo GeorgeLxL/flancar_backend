@@ -18,7 +18,7 @@ export function login(req: Request, res: Response) {
 }
 
 export async function callback(req: Request, res: Response) {
-  const { SMAREGI_CLIENT_ID, SMAREGI_CLIENT_SECRET, SMAREGI_REDIRECT_URI, SMAREGI_TOKEN_URL, SMAREGI_API_BASE, FRONTEND_URL = 'http://localhost:3000' } = process.env;
+  const { SMAREGI_CLIENT_ID, SMAREGI_CLIENT_SECRET, SMAREGI_REDIRECT_URI, SMAREGI_TOKEN_URL, SMAREGI_API_BASE, SMAREGI_CONTRACT_ID, FRONTEND_URL = 'http://localhost:3000' } = process.env;
   const { code } = req.query;
   const email = (req.session as any).loginEmail;
   if (!email) {
@@ -37,11 +37,7 @@ export async function callback(req: Request, res: Response) {
 
     const { access_token } = tokenRes.data;
 
-    const userRes = await axios.get(`${SMAREGI_API_BASE}/userinfo`, {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-
-    const contractId = userRes.data.contractId;
+    const contractId = SMAREGI_CONTRACT_ID!;
 
     const staffsRes = await axios.get(`${SMAREGI_API_BASE}/${contractId}/pos/staffs`, {
       headers: { Authorization: `Bearer ${access_token}` },
@@ -52,13 +48,12 @@ export async function callback(req: Request, res: Response) {
     const staff = staffs.find((s: any) => s.email === email);
     if (!staff) {
       delete (req.session as any).loginEmail;
-      return res.redirect(`${FRONTEND_URL}?error=user_not_found?staffs=${encodeURIComponent(JSON.stringify(staffs))}`);
+      return res.redirect(`${FRONTEND_URL}?error=user_not_found`);
     }
 
     (req.session as any).user = {
       ...staff,
       accessToken: access_token,
-      contractId,
       role: staff.role ?? 'worker',
     };
 

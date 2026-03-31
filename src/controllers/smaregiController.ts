@@ -59,7 +59,8 @@ function normalizeProduct(product: SmaregiProduct) {
 }
 
 export async function getProducts(req: Request, res: Response) {
-  const { accessToken, contractId } = (req.session as any).user;
+  const { accessToken } = (req.session as any).user;
+  const contractId = process.env.SMAREGI_CONTRACT_ID!;
   try {
     const result = await smaregiApi(accessToken).get(`/${contractId}/pos/products`, { params: { limit: 1000 } });
     const products = Array.isArray(result.data)
@@ -74,7 +75,8 @@ export async function getProducts(req: Request, res: Response) {
 }
 
 export async function getStores(req: Request, res: Response) {
-  const { accessToken, contractId } = (req.session as any).user;
+  const { accessToken } = (req.session as any).user;
+  const contractId = process.env.SMAREGI_CONTRACT_ID!;
   try {
     const result = await smaregiApi(accessToken).get(`/${contractId}/pos/stores`);
     res.json(result.data);
@@ -84,7 +86,8 @@ export async function getStores(req: Request, res: Response) {
 }
 
 export async function getStaffs(req: Request, res: Response) {
-  const { accessToken, contractId } = (req.session as any).user;
+  const { accessToken } = (req.session as any).user;
+  const contractId = process.env.SMAREGI_CONTRACT_ID!;
   try {
     const result = await smaregiApi(accessToken).get(`/${contractId}/pos/staffs`);
     res.json(result.data);
