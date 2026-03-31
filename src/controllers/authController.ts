@@ -28,7 +28,7 @@ export async function callback(req: Request, res: Response) {
       client_secret: SMAREGI_CLIENT_SECRET!,
     });
 
-    const tokenRes = await axios.post(SMAREGI_TOKEN_URL!, params.toString(), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    const tokenRes = await axios.post(SMAREGI_TOKEN_URL!, params, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
 
     const { access_token } = tokenRes.data;
 
