@@ -43,8 +43,12 @@ export async function callback(req: Request, res: Response) {
     };
 
     res.redirect(FRONTEND_URL);
-  } catch (error) {
-    res.status(500).json({ error: 'Authentication failed', details: error instanceof Error ? error.message : error });
+  } catch (error: any) {
+    res.status(500).json({ 
+      error: 'Authentication failed',
+      status: error.response?.status,
+      data: error.response?.data,
+    });
   }
 }
 
