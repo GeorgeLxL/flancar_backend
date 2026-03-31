@@ -16,13 +16,20 @@ global.email = "";
 
 const app = express();
 
+const isProd = process.env.NODE_ENV === 'production';
+
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET!,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge: 86400000, sameSite: 'lax', secure: false },
+  cookie: {
+    httpOnly: true,
+    maxAge: 86400000,
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd,
+  },
 }));
 
 app.use('/auth', authRouter);
