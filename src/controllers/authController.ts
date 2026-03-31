@@ -6,7 +6,7 @@ dotenv.config();
 
 export function login(req: Request, res: Response) {
   const { email } = req.body;
-  (req.session as any).loginEmail = email;
+  global.email = email;
   const { SMAREGI_CLIENT_ID, SMAREGI_REDIRECT_URI, SMAREGI_AUTH_URL } = process.env;
   const params = new URLSearchParams({
     response_type: 'code',
@@ -20,7 +20,7 @@ export function login(req: Request, res: Response) {
 export async function callback(req: Request, res: Response) {
   const { SMAREGI_CLIENT_ID, SMAREGI_CLIENT_SECRET, SMAREGI_REDIRECT_URI, SMAREGI_TOKEN_URL, SMAREGI_API_BASE, SMAREGI_CONTRACT_ID, FRONTEND_URL = 'http://localhost:3000' } = process.env;
   const { code } = req.query;
-  const email = (req.session as any).loginEmail;
+  const email = global.email;
   if (!email) {
     return res.redirect(`${FRONTEND_URL}?error=no_email`);
   }
@@ -33,7 +33,16 @@ export async function callback(req: Request, res: Response) {
       client_secret: SMAREGI_CLIENT_SECRET!,
     });
 
-    const tokenRes = await axios.post(SMAREGI_TOKEN_URL!, params, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    const tokenRes = await axios.post(
+      `https://id.smaregi.dev/authorize/token`,
+      params.toString(),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + Buffer.from(`${SMAREGI_CLIENT_ID}:${SMAREGI_CLIENT_SECRET}`).toString('base64'),
+        },
+      }
+    );
 
     const { access_token } = tokenRes.data;
 
@@ -47,21 +56,27 @@ export async function callback(req: Request, res: Response) {
 
     const staff = staffs.find((s: any) => s.email === email);
     if (!staff) {
-      delete (req.session as any).loginEmail;
+      global.email = "";
       return res.redirect(`${FRONTEND_URL}?error=user_not_found`);
     }
 
     (req.session as any).user = {
       ...staff,
       accessToken: access_token,
-      role: staff.role ?? 'worker',
     };
 
-    delete (req.session as any).loginEmail;
-    res.redirect(FRONTEND_URL);
+    const user = {
+      staffName: staff.staffName,
+      email: staff.email,
+      roleId: staff.roleId,
+      accessToken: access_token,
+    }
+
+    global.email = "";
+    res.redirect(`${FRONTEND_URL}?user=${encodeURIComponent(JSON.stringify(user))}`);
   } catch (error: any) {
-    delete (req.session as any).loginEmail;
-    res.redirect(`${FRONTEND_URL}?error=auth_failed`);
+    global.email = "";
+    res.redirect(`${FRONTEND_URL}?error=auth_failed?error=${encodeURIComponent(error.message)}`);
   }
 }
 

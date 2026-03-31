@@ -6,7 +6,13 @@ import authRouter from './routes/auth';
 import scheduleRouter from './routes/schedules';
 import smaregiRouter from './routes/smaregi';
 
+declare global {
+  var email: string;
+}
+
 dotenv.config();
+
+global.email = "";
 
 const app = express();
 
@@ -16,7 +22,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET!,
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, maxAge: 86400000, sameSite: 'none', secure: false },
+  cookie: { httpOnly: true, maxAge: 86400000, sameSite: 'lax', secure: false },
 }));
 
 app.use('/auth', authRouter);
