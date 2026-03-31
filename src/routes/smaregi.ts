@@ -5,8 +5,8 @@ import { getProducts, getStores, getStaffs } from '../controllers/smaregiControl
 const router = Router();
 router.use(requireAuth);
 
-router.get('/products', getProducts);
-router.get('/stores', getStores);
-router.get('/staffs', getStaffs);
+router.get('/products', requireAuth, getProducts);
+router.get('/stores', requireAuth, getStores);
+router.get('/staffs', requireAuth, getStaffs);
 
 export default router;
