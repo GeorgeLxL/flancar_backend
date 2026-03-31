@@ -16,7 +16,7 @@ async function enrichScheduleItems(req: Request, schedule: any) {
   if (!user || !schedule?.items?.length) return schedule;
 
   try {
-    const result = await smaregiApi(user.accessToken).get(`/${user.contractId}/pos/products`, { params: { limit: 1000 } });
+    const result = await smaregiApi(user.accessToken).get(`/${process.env.SMAREGI_CONTRACT_ID!}/pos/products`, { params: { limit: 1000 } });
     const products = Array.isArray(result.data)
       ? result.data
       : Array.isArray(result.data?.products)
