@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import authRouter from './routes/auth';
 import scheduleRouter from './routes/schedules';
 import smaregiRouter from './routes/smaregi';
+import path from 'path';
 
 dotenv.config();
 
@@ -25,6 +26,13 @@ app.use(session({
     secure: isProd,
   },
 }));
+// Serve frontend
+app.use(express.static(path.join(__dirname, '/build')));
+
+// All routes fallback to index.html (for SPA routing)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '/build/index.html'));
+});
 
 app.use('/auth', authRouter);
 app.use('/schedules', scheduleRouter);
