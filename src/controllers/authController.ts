@@ -30,8 +30,6 @@ export async function callback(req: Request, res: Response) {
 
     const tokenRes = await axios.post(SMAREGI_TOKEN_URL!, params.toString(), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
 
-    console.log('Token response:', tokenRes, tokenRes.data); // 追加: トークンレスポンスをログに出力
-
     const { access_token } = tokenRes.data;
 
     const userRes = await axios.get(`${SMAREGI_API_BASE}/userinfo`, {
@@ -45,8 +43,8 @@ export async function callback(req: Request, res: Response) {
     };
 
     res.redirect(FRONTEND_URL);
-  } catch {
-    res.status(500).json({ error: 'Auth failed' });
+  } catch (error) {
+    res.status(500).json({ error: 'Authentication failed', details: error instanceof Error ? error.message : error });
   }
 }
 
