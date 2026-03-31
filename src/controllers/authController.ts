@@ -34,7 +34,7 @@ export async function callback(req: Request, res: Response) {
     });
 
     const tokenRes = await axios.post(
-      `https://id.smaregi.dev/authorize/token`,
+      SMAREGI_TOKEN_URL!,
       params.toString(),
       {
         headers: {
