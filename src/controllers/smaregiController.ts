@@ -82,3 +82,13 @@ export async function getStores(req: Request, res: Response) {
     res.status(500).json({ error: 'Failed to fetch stores' });
   }
 }
+
+export async function getStaffs(req: Request, res: Response) {
+  const { accessToken, contractId } = (req.session as any).user;
+  try {
+    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/staffs`);
+    res.json(result.data);
+  } catch {
+    res.status(500).json({ error: 'Failed to fetch staffs' });
+  }
+}
