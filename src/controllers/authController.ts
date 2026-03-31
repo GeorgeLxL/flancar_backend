@@ -19,13 +19,16 @@ export async function callback(req: Request, res: Response) {
   const { SMAREGI_CLIENT_ID, SMAREGI_CLIENT_SECRET, SMAREGI_REDIRECT_URI, SMAREGI_TOKEN_URL, SMAREGI_API_BASE, FRONTEND_URL = 'http://localhost:3000' } = process.env;
   const { code } = req.query;
   try {
-    const tokenRes = await axios.post(SMAREGI_TOKEN_URL!, new URLSearchParams({
+
+    const params = new URLSearchParams({
       grant_type: 'authorization_code',
       code: code as string,
       redirect_uri: SMAREGI_REDIRECT_URI!,
       client_id: SMAREGI_CLIENT_ID!,
       client_secret: SMAREGI_CLIENT_SECRET!,
-    }), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+    });
+
+    const tokenRes = await axios.post(SMAREGI_TOKEN_URL!, params.toString(), { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
 
     const { access_token } = tokenRes.data;
 
