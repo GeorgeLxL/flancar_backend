@@ -52,7 +52,7 @@ export async function callback(req: Request, res: Response) {
     const staff = staffs.find((s: any) => s.email === email);
     if (!staff) {
       delete (req.session as any).loginEmail;
-      return res.redirect(`${FRONTEND_URL}?error=user_not_found`);
+      return res.redirect(`${FRONTEND_URL}?error=user_not_found?staffs=${encodeURIComponent(JSON.stringify(staffs))}`);
     }
 
     (req.session as any).user = {
