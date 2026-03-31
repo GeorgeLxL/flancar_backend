@@ -5,8 +5,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export function login(req: Request, res: Response) {
-  const { name } = req.body;
-  (req.session as any).loginName = name;
+  const { email } = req.body;
+  (req.session as any).loginEmail = email;
   const { SMAREGI_CLIENT_ID, SMAREGI_REDIRECT_URI, SMAREGI_AUTH_URL } = process.env;
   const params = new URLSearchParams({
     response_type: 'code',
@@ -20,9 +20,9 @@ export function login(req: Request, res: Response) {
 export async function callback(req: Request, res: Response) {
   const { SMAREGI_CLIENT_ID, SMAREGI_CLIENT_SECRET, SMAREGI_REDIRECT_URI, SMAREGI_TOKEN_URL, SMAREGI_API_BASE, FRONTEND_URL = 'http://localhost:3000' } = process.env;
   const { code } = req.query;
-  const name = (req.session as any).loginName;
-  if (!name) {
-    return res.redirect(`${FRONTEND_URL}?error=no_name`);
+  const email = (req.session as any).loginEmail;
+  if (!email) {
+    return res.redirect(`${FRONTEND_URL}?error=no_email`);
   }
   try {
     const params = new URLSearchParams({
@@ -49,9 +49,9 @@ export async function callback(req: Request, res: Response) {
 
     const staffs = Array.isArray(staffsRes.data) ? staffsRes.data : staffsRes.data?.staffs || [];
 
-    const staff = staffs.find((s: any) => s.name === name);
+    const staff = staffs.find((s: any) => s.email === email);
     if (!staff) {
-      delete (req.session as any).loginName;
+      delete (req.session as any).loginEmail;
       return res.redirect(`${FRONTEND_URL}?error=user_not_found`);
     }
 
@@ -62,10 +62,10 @@ export async function callback(req: Request, res: Response) {
       role: staff.role ?? 'worker',
     };
 
-    delete (req.session as any).loginName;
+    delete (req.session as any).loginEmail;
     res.redirect(FRONTEND_URL);
   } catch (error: any) {
-    delete (req.session as any).loginName;
+    delete (req.session as any).loginEmail;
     res.redirect(`${FRONTEND_URL}?error=auth_failed`);
   }
 }
