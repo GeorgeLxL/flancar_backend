@@ -3,7 +3,7 @@ import { login, callback, me, logout } from '../controllers/authController';
 
 const router = Router();
 
-router.get('/login', login);
+router.post('/login', login);
 router.get('/callback', callback);
 router.get('/me', me);
 router.post('/logout', logout);
