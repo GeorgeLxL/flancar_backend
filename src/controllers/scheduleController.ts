@@ -51,7 +51,7 @@ async function enrichScheduleItems(req: Request, schedule: any) {
 async function ensureWorkerCanEdit(req: Request, scheduleId: number) {
   const user = (req.session as any).user;
 
-  if (!user || user.role !== 'worker') return null;
+  if (!user || user.roleId !== '3') return null;
 
   const schedule = await (prisma.schedule as any).findUnique({
     where: { id: scheduleId },
