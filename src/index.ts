@@ -6,13 +6,7 @@ import authRouter from './routes/auth';
 import scheduleRouter from './routes/schedules';
 import smaregiRouter from './routes/smaregi';
 
-declare global {
-  var email: string;
-}
-
 dotenv.config();
-
-global.email = "";
 
 const app = express();
 

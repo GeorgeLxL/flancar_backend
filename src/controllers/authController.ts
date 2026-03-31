@@ -6,21 +6,21 @@ dotenv.config();
 
 export function login(req: Request, res: Response) {
   const { email } = req.body;
-  global.email = email;
   const { SMAREGI_CLIENT_ID, SMAREGI_REDIRECT_URI, SMAREGI_AUTH_URL } = process.env;
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: SMAREGI_CLIENT_ID!,
     redirect_uri: SMAREGI_REDIRECT_URI!,
     scope: 'openid pos.staffs:read pos.products:read pos.stores:read',
+    state: encodeURIComponent(email),
   });
   res.json({ url: `${SMAREGI_AUTH_URL}?${params}` });
 }
 
 export async function callback(req: Request, res: Response) {
   const { SMAREGI_CLIENT_ID, SMAREGI_CLIENT_SECRET, SMAREGI_REDIRECT_URI, SMAREGI_TOKEN_URL, SMAREGI_API_BASE, SMAREGI_CONTRACT_ID, FRONTEND_URL = 'http://localhost:3000' } = process.env;
-  const { code } = req.query;
-  const email = global.email;
+  const { code, state } = req.query;
+  const email = decodeURIComponent(state as string);
   if (!email) {
     return res.redirect(`${FRONTEND_URL}?error=no_email`);
   }
@@ -56,7 +56,6 @@ export async function callback(req: Request, res: Response) {
 
     const staff = staffs.find((s: any) => s.email === email);
     if (!staff) {
-      global.email = "";
       return res.redirect(`${FRONTEND_URL}?error=user_not_found`);
     }
 
@@ -72,10 +71,8 @@ export async function callback(req: Request, res: Response) {
       accessToken: access_token,
     }
 
-    global.email = "";
     res.redirect(`${FRONTEND_URL}?user=${encodeURIComponent(JSON.stringify(user))}`);
   } catch (error: any) {
-    global.email = "";
     res.redirect(`${FRONTEND_URL}?error=auth_failed?error=${encodeURIComponent(error.message)}`);
   }
 }
