@@ -13,6 +13,8 @@ const app = express();
 
 const isProd = process.env.NODE_ENV === 'production';
 
+if (isProd) app.set('trust proxy', 1); // trust first proxy (for secure cookies behind proxies/load balancers)
+
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.json());
 app.use(session({
