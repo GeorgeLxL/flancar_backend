@@ -85,6 +85,8 @@ export async function createSchedule(req: Request, res: Response) {
   const dateStr = format(new Date(), 'yyyyMMdd');
   const count = await prisma.schedule.count();
   const pdfNumber = `${dateStr}${String(count + 1).padStart(3, '0')}`;
+  const staffId = data.staffId || '';
+  const staffName = data.staffName || '';
 
   const sanitizedItems = (items || []).map((item: any) => ({
     productId: item.productId,
@@ -95,6 +97,8 @@ export async function createSchedule(req: Request, res: Response) {
   const schedule = await prisma.schedule.create({
     data: {
       ...data,
+      staffId,
+      staffName,
       pdfNumber,
       startAt: new Date(data.startAt),
       endAt: new Date(data.endAt),
@@ -112,6 +116,9 @@ export async function updateSchedule(req: Request, res: Response) {
 
   const { items, ...data } = req.body;
 
+  const staffId = data.staffId || '';
+  const staffName = data.staffName || '';
+
   const sanitizedItems = (items || []).map((item: any) => ({
     productId: item.productId,
     productName: item.productName,
@@ -122,6 +129,8 @@ export async function updateSchedule(req: Request, res: Response) {
     where: { id: Number(req.params.id) },
     data: {
       ...data,
+      staffId,
+      staffName,
       startAt: new Date(data.startAt),
       endAt: new Date(data.endAt),
       items: { deleteMany: {}, create: sanitizedItems },
