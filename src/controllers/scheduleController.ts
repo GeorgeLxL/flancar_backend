@@ -86,17 +86,24 @@ export async function createSchedule(req: Request, res: Response) {
   const count = await prisma.schedule.count();
   const pdfNumber = `${dateStr}${String(count + 1).padStart(3, '0')}`;
 
+  const sanitizedItems = (items || []).map((item: any) => ({
+    productId: item.productId,
+    productName: item.productName,
+    quantity: item.quantity,
+  }));
+
   const schedule = await prisma.schedule.create({
     data: {
       ...data,
       pdfNumber,
       startAt: new Date(data.startAt),
       endAt: new Date(data.endAt),
-      items: { create: items },
+      items: { create: sanitizedItems },
     },
     include: { items: true },
   });
-  res.status(201).json(schedule);
+
+  res.status(201).json(await enrichScheduleItems(req, schedule));
 }
 
 export async function updateSchedule(req: Request, res: Response) {
@@ -104,17 +111,25 @@ export async function updateSchedule(req: Request, res: Response) {
   if (guard) return res.status(guard.status).json({ error: guard.error });
 
   const { items, ...data } = req.body;
+
+  const sanitizedItems = (items || []).map((item: any) => ({
+    productId: item.productId,
+    productName: item.productName,
+    quantity: item.quantity,
+  }));
+
   const schedule = await prisma.schedule.update({
     where: { id: Number(req.params.id) },
     data: {
       ...data,
       startAt: new Date(data.startAt),
       endAt: new Date(data.endAt),
-      items: { deleteMany: {}, create: items },
+      items: { deleteMany: {}, create: sanitizedItems },
     },
     include: { items: true },
   });
-  res.json(schedule);
+
+  res.json(await enrichScheduleItems(req, schedule));
 }
 
 export async function deleteSchedule(req: Request, res: Response) {
