@@ -71,6 +71,30 @@ export async function listSchedules(_req: Request, res: Response) {
   res.json(schedules);
 }
 
+export async function listSchedulesByRange(req: Request, res: Response) {
+  const { from, to } = req.query;
+  if (!from || !to) return res.status(400).json({ error: 'from and to are required' });
+
+  const fromDate = new Date(String(from));
+  const toDate = new Date(String(to));
+  if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+    return res.status(400).json({ error: 'Invalid date format' });
+  }
+
+  const schedules = await prisma.schedule.findMany({
+    where: {
+      OR: [
+        { startAt: { gte: fromDate, lte: toDate } },
+        { endAt: { gte: fromDate, lte: toDate } },
+        { startAt: { lte: fromDate }, endAt: { gte: toDate } },
+      ],
+    },
+    include: { items: true },
+    orderBy: { startAt: 'asc' },
+  });
+  res.json(schedules);
+}
+
 export async function getSchedule(req: Request, res: Response) {
   const schedule = await prisma.schedule.findUnique({
     where: { id: Number(req.params.id) },
