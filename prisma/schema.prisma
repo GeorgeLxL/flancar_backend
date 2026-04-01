@@ -22,8 +22,8 @@ model Schedule {
   description  String?
   startAt      DateTime
   endAt        DateTime
-  storeId      String
-  storeName    String
+  staffId      String
+  staffName    String
   assignee     String
   responsible  String
   customerName String
