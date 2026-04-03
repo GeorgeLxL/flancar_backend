@@ -44,3 +44,18 @@ model ScheduleItem {
   quantity    Int
   schedule    Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 }
+
+model Product {
+  id          Int    @id @default(autoincrement())
+  productId   String @unique
+  productName String
+  unitPrice   Int    @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model Customer {
+  id           Int    @id @default(autoincrement())
+  customerId   String @unique
+  customerName String
+  updatedAt    DateTime @updatedAt
+}
