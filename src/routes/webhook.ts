@@ -31,12 +31,17 @@ router.post('/now', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'accessToken is required' });
   }
 
-  await syncProductsAndCustomers(accessToken).catch(e => {
+  await syncProductsAndCustomers(accessToken)
+  .then(() => {
+    console.log('Webhook sync completed successfully')
+    return res.status(200).json({ success: true, message: 'Sync completed' });
+  })
+  .catch(e => {
     console.error('Webhook sync failed:', e)
     return res.status(500).json({ error: 'Sync failed' })
   });
 
-  res.status(200).json({ success: true, message: 'Sync completed' });
+  
 });
 
 export default router;
