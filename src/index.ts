@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import authRouter from './routes/auth';
 import scheduleRouter from './routes/schedules';
 import smaregiRouter from './routes/smaregi';
+import webhookRouter from './routes/webhook';
 import path from 'path';
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use(session({
 app.use('/auth', authRouter);
 app.use('/schedules', scheduleRouter);
 app.use('/smaregi', smaregiRouter);
+app.use('/webhook', webhookRouter);
 
 // Serve frontend
 app.use(express.static(path.join(__dirname, '../build')));

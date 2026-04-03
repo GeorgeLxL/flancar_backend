@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import axios from 'axios';
+import prisma from '../prisma';
 
 const smaregiApi = (token: string) =>
   axios.create({
@@ -62,7 +63,7 @@ export async function getProducts(req: Request, res: Response) {
   const { accessToken } = (req.session as any).user;
   const contractId = process.env.SMAREGI_CONTRACT_ID!;
   try {
-    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/products`, {params: { limit: 100000 }});
+    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/products`, {params: { limit: 1000 }});
     const products = Array.isArray(result.data)
       ? result.data.map(normalizeProduct)
       : Array.isArray(result.data?.products)
@@ -85,6 +86,26 @@ export async function getStores(req: Request, res: Response) {
   }
 }
 
+export async function searchProducts(req: Request, res: Response) {
+  const q = String(req.query.q ?? '');
+  const products = await prisma.product.findMany({
+    where: q ? { productName: { contains: q, mode: 'insensitive' } } : {},
+    orderBy: { productName: 'asc' },
+    take: 50,
+  });
+  res.json(products);
+}
+
+export async function searchCustomers(req: Request, res: Response) {
+  const q = String(req.query.q ?? '');
+  const customers = await prisma.customer.findMany({
+    where: q ? { customerName: { contains: q, mode: 'insensitive' } } : {},
+    orderBy: { customerName: 'asc' },
+    take: 50,
+  });
+  res.json(customers);
+}
+
 export async function getStaffs(req: Request, res: Response) {
   const { accessToken } = (req.session as any).user;
   const contractId = process.env.SMAREGI_CONTRACT_ID!;
@@ -100,7 +121,7 @@ export async function getCustomers(req: Request, res: Response) {
   const { accessToken } = (req.session as any).user;
   const contractId = process.env.SMAREGI_CONTRACT_ID!;
   try {
-    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/customers`, {params: { limit: 100000 }});
+    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/customers`, {params: { limit: 1000 }});
     const customers = Array.isArray(result.data) ? result.data : result.data?.customers ?? [];
     res.json(customers.map((c: any) => {
       const name = c.lastName + ' ' + c.firstName
