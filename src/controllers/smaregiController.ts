@@ -62,7 +62,7 @@ export async function getProducts(req: Request, res: Response) {
   const { accessToken } = (req.session as any).user;
   const contractId = process.env.SMAREGI_CONTRACT_ID!;
   try {
-    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/products`);
+    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/products`, {params: { limit: 100000 }});
     const products = Array.isArray(result.data)
       ? result.data.map(normalizeProduct)
       : Array.isArray(result.data?.products)
@@ -100,7 +100,7 @@ export async function getCustomers(req: Request, res: Response) {
   const { accessToken } = (req.session as any).user;
   const contractId = process.env.SMAREGI_CONTRACT_ID!;
   try {
-    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/customers`);
+    const result = await smaregiApi(accessToken).get(`/${contractId}/pos/customers`, {params: { limit: 100000 }});
     const customers = Array.isArray(result.data) ? result.data : result.data?.customers ?? [];
     res.json(customers.map((c: any) => {
       const name = c.lastName + ' ' + c.firstName
