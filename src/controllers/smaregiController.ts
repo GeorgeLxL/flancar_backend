@@ -13,19 +13,18 @@ type SmaregiProduct = {
   productCode?: string;
   productName?: string;
   name?: string;
-  price?: number | string;
-  unitPrice?: number | string;
-  sellPrice?: number | string;
-  salesPrice?: number | string;
-  taxIncludedPrice?: number | string;
-  taxExcludedPrice?: number | string;
+  price?: string;
+  customerPrice?: string;
+  reduceTaxPrice?: string;
+  reduceTaxCustomerPrice?: string;
+  cost?: string;
   prices?: Array<{ price?: number | string }>;
 };
 
 function toNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
-    const parsed = Number(value);
+    const parsed = Number(value.replace(/[^0-9.]/g, ''));
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
@@ -33,13 +32,12 @@ function toNumber(value: unknown): number | null {
 
 export function getProductUnitPrice(product: SmaregiProduct): number {
   const candidates = [
-    product.unitPrice,
-    product.price,
-    product.sellPrice,
-    product.salesPrice,
-    product.taxIncludedPrice,
-    product.taxExcludedPrice,
-    product.prices?.[0]?.price,
+    product?.price,
+    product?.customerPrice,
+    product?.reduceTaxPrice,
+    product?.reduceTaxCustomerPrice,
+    product?.cost,
+    product?.prices?.[0]?.price,
   ];
 
   for (const candidate of candidates) {
