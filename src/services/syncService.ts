@@ -46,11 +46,25 @@ export async function syncProductsAndCustomers(accessToken: string) {
       })).filter((p: any) => p.productId);
 
       await prisma.$executeRawUnsafe(`
-        INSERT INTO "Product" ("productId", "productName", "unitPrice", "updatedAt")
-        VALUES ${batch.map((_: any, j: number) => `($${j * 4 + 1}, $${j * 4 + 2}, $${j * 4 + 3}, NOW())`).join(',')}
-        ON CONFLICT ("productId") DO UPDATE
-        SET "productName" = EXCLUDED."productName", "unitPrice" = EXCLUDED."unitPrice", "updatedAt" = NOW()
-      `, ...batch.flatMap((p: any) => [p.productId, p.productName, p.unitPrice]));
+          INSERT INTO "Product" ("productId", "productName", "unitPrice", "updatedAt")
+          VALUES ${batch
+                  .map((_, j) => `(
+              $${j * 4 + 1},
+              $${j * 4 + 2},
+              $${j * 4 + 3}::INTEGER,
+              NOW()
+            )`).join(',')}
+          ON CONFLICT ("productId") DO UPDATE
+          SET
+            "productName" = EXCLUDED."productName",
+            "unitPrice" = EXCLUDED."unitPrice",
+            "updatedAt" = NOW()
+        `,
+        ...batch.flatMap(p => [
+          p.productId,
+          p.productName,
+          p.unitPrice === null ? null : Number(p.unitPrice),
+        ]));
     }
     console.log(`Synced ${products.length} products`);
   } catch (e) {
