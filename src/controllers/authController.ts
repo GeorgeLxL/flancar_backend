@@ -11,7 +11,7 @@ export function login(req: Request, res: Response) {
     response_type: 'code',
     client_id: SMAREGI_CLIENT_ID!,
     redirect_uri: SMAREGI_REDIRECT_URI!,
-    scope: 'openid pos.staffs:read pos.products:read pos.stores:read',
+    scope: 'openid pos.staffs:read pos.products:read pos.stores:read pos.customers:read',
     state: encodeURIComponent(email),
   });
   res.json({ url: `${SMAREGI_AUTH_URL}?${params}` });
@@ -65,6 +65,7 @@ export async function callback(req: Request, res: Response) {
     };
 
     const user = {
+      staffId: staff.staffId,
       staffName: staff.staffName,
       email: staff.email,
       roleId: staff.roleId,
