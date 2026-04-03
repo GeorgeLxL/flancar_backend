@@ -22,7 +22,6 @@ async function fetchAllPages<T>(api: ReturnType<typeof smaregiApi>, path: string
         : [];
 
     all.push(...items);
-
     if (items.length < limit) break;
     page++;
   }
@@ -36,35 +35,27 @@ export async function syncProductsAndCustomers(accessToken: string) {
 
   // Sync products
   try {
-    const products = await fetchAllPages<any>(api, `/${contractId}/pos/products`);
-    const BATCH = 500;
-    for (let i = 0; i < products.length; i += BATCH) {
-      const batch = products.slice(i, i + BATCH).map((p: any) => ({
+    const raw = await fetchAllPages<any>(api, `/${contractId}/pos/products`);
+    const products = raw
+      .map((p: any) => ({
         productId: String(p.productId ?? p.productCode ?? ''),
-        productName: p.productName ?? p.name ?? '',
+        productName: String(p.productName ?? p.name ?? ''),
         unitPrice: getProductUnitPrice(p),
-      })).filter((p: any) => p.productId);
+      }))
+      .filter(p => p.productId);
 
-      await prisma.$executeRawUnsafe(`
-          INSERT INTO "Product" ("productId", "productName", "unitPrice", "updatedAt")
-          VALUES ${batch
-                  .map((_, j) => `(
-              $${j * 4 + 1},
-              $${j * 4 + 2},
-              $${j * 4 + 3}::INTEGER,
-              NOW()
-            )`).join(',')}
-          ON CONFLICT ("productId") DO UPDATE
-          SET
-            "productName" = EXCLUDED."productName",
-            "unitPrice" = EXCLUDED."unitPrice",
-            "updatedAt" = NOW()
-        `,
-        ...batch.flatMap(p => [
-          p.productId,
-          p.productName,
-          p.unitPrice === null ? null : Number(p.unitPrice),
-        ]));
+    const BATCH = 200;
+    for (let i = 0; i < products.length; i += BATCH) {
+      const batch = products.slice(i, i + BATCH);
+      await Promise.all(
+        batch.map(p =>
+          prisma.product.upsert({
+            where: { productId: p.productId },
+            update: { productName: p.productName, unitPrice: p.unitPrice },
+            create: p,
+          })
+        )
+      );
     }
     console.log(`Synced ${products.length} products`);
   } catch (e) {
@@ -73,20 +64,26 @@ export async function syncProductsAndCustomers(accessToken: string) {
 
   // Sync customers
   try {
-    const customers = await fetchAllPages<any>(api, `/${contractId}/pos/customers`);
-    const BATCH = 500;
-    for (let i = 0; i < customers.length; i += BATCH) {
-      const batch = customers.slice(i, i + BATCH).map((c: any) => ({
+    const raw = await fetchAllPages<any>(api, `/${contractId}/pos/customers`);
+    const customers = raw
+      .map((c: any) => ({
         customerId: String(c.customerId ?? c.memberNo ?? ''),
-        customerName: c.customerName ?? c.name ?? '',
-      })).filter((c: any) => c.customerId);
+        customerName: String(c.customerName ?? c.name ?? ''),
+      }))
+      .filter(c => c.customerId);
 
-      await prisma.$executeRawUnsafe(`
-        INSERT INTO "Customer" ("customerId", "customerName", "updatedAt")
-        VALUES ${batch.map((_: any, j: number) => `($${j * 3 + 1}, $${j * 3 + 2}, NOW())`).join(',')}
-        ON CONFLICT ("customerId") DO UPDATE
-        SET "customerName" = EXCLUDED."customerName", "updatedAt" = NOW()
-      `, ...batch.flatMap((c: any) => [c.customerId, c.customerName]));
+    const BATCH = 200;
+    for (let i = 0; i < customers.length; i += BATCH) {
+      const batch = customers.slice(i, i + BATCH);
+      await Promise.all(
+        batch.map(c =>
+          prisma.customer.upsert({
+            where: { customerId: c.customerId },
+            update: { customerName: c.customerName },
+            create: c,
+          })
+        )
+      );
     }
     console.log(`Synced ${customers.length} customers`);
   } catch (e) {
