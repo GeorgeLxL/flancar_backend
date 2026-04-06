@@ -29,7 +29,7 @@ async function fetchAllPages<T>(api: ReturnType<typeof smaregiApi>, path: string
   return all;
 }
 
-export async function syncProductsAndCustomers(accessToken: string) {
+export async function syncProducts(accessToken: string) {
   const contractId = process.env.SMAREGI_CONTRACT_ID!;
   const api = smaregiApi(accessToken);
 
@@ -62,13 +62,19 @@ export async function syncProductsAndCustomers(accessToken: string) {
     console.error('Failed to sync products:', e);
   }
 
+}
+
+export async function syncCustomers(accessToken: string) {
+  const contractId = process.env.SMAREGI_CONTRACT_ID!;
+  const api = smaregiApi(accessToken);
+
   // Sync customers
   try {
     const raw = await fetchAllPages<any>(api, `/${contractId}/pos/customers`);
     const customers = raw
       .map((c: any) => ({
         customerId: String(c.customerId ?? c.memberNo ?? ''),
-        customerName: String(c.customerName ?? c.name ?? ''),
+        customerName: String(`${c.lastName} ${c.firstName}` ? `${c.lastName} ${c.firstName}` : c.customerName ?? c.name ?? ''),
       }))
       .filter(c => c.customerId);
 
