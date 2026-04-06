@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import prisma from '../prisma';
-import { syncProductsAndCustomers } from '../services/syncService';
+import { syncProducts, syncCustomers } from '../services/syncService';
 
 dotenv.config();
 
@@ -72,7 +72,8 @@ export async function callback(req: Request, res: Response) {
       prisma.customer.count(),
     ]);
     if (productCount === 0 || customerCount === 0) {
-      syncProductsAndCustomers(access_token).catch(e => console.error('Initial sync failed:', e));
+      syncProducts(access_token).catch(e => console.error('Initial sync failed:', e));
+      syncCustomers(access_token).catch(e => console.error('Initial sync failed:', e));
     }
     const user = {
       staffId: staff.staffId,
