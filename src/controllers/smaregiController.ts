@@ -90,6 +90,7 @@ export async function searchProducts(req: Request, res: Response) {
     where: q ? { productName: { contains: q, mode: 'insensitive' } } : {},
     orderBy: { productName: 'asc' },
     take: 50,
+    select: { productId: true, productName: true, maker: true, unitPrice: true },
   });
   res.json(products);
 }

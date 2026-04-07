@@ -40,22 +40,30 @@ model ScheduleItem {
   scheduleId  Int
   productId   String
   productName String
+  maker       String   @default("")
   unitPrice   Int      @default(0)
   quantity    Int
   schedule    Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 }
 
 model Product {
-  id          Int    @id @default(autoincrement())
-  productId   String @unique
+  id          Int      @id @default(autoincrement())
+  productId   String   @unique
   productName String
-  unitPrice   Int    @default(0)
+  maker       String   @default("")
+  unitPrice   Int      @default(0)
   updatedAt   DateTime @updatedAt
 }
 
 model Customer {
-  id           Int    @id @default(autoincrement())
-  customerId   String @unique
+  id           Int      @id @default(autoincrement())
+  customerId   String   @unique
   customerName String
   updatedAt    DateTime @updatedAt
+}
+
+model StaffColor {
+  staffId   String   @id
+  color     String   @default("#6b7280")
+  updatedAt DateTime @updatedAt
 }

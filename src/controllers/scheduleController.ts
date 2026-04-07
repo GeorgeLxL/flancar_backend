@@ -24,6 +24,7 @@ function sanitizeItems(items: any[]) {
   return (items || []).map((item: any) => ({
     productId: item.productId,
     productName: item.productName,
+    maker: item.maker ?? '',
     unitPrice: Number(item.unitPrice) || 0,
     quantity: item.quantity,
   }));

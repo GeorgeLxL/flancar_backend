@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import prisma from '../prisma';
-import { syncProducts, syncCustomers } from '../services/syncService';
 
 dotenv.config();
 
@@ -66,15 +65,6 @@ export async function callback(req: Request, res: Response) {
       accessToken: access_token,
     };
 
-    // On first deployment: sync if tables are empty
-    const [productCount, customerCount] = await Promise.all([
-      prisma.product.count(),
-      prisma.customer.count(),
-    ]);
-    if (productCount === 0 || customerCount === 0) {
-      syncProducts(access_token).catch(e => console.error('Initial sync failed:', e));
-      syncCustomers(access_token).catch(e => console.error('Initial sync failed:', e));
-    }
     const user = {
       staffId: staff.staffId,
       staffName: staff.staffName,
@@ -93,6 +83,31 @@ export function me(req: Request, res: Response) {
   const user = (req.session as any).user;
   if (!user) return res.status(401).json({ error: 'Not logged in' });
   res.json(user);
+}
+
+export async function getColor(req: Request, res: Response) {
+  const user = (req.session as any).user;
+  if (!user) return res.status(401).json({ error: 'Not logged in' });
+  const record = await prisma.staffColor.findUnique({ where: { staffId: user.staffId } });
+  res.json({ color: record?.color ?? '#6b7280' });
+}
+
+export async function setColor(req: Request, res: Response) {
+  const user = (req.session as any).user;
+  if (!user) return res.status(401).json({ error: 'Not logged in' });
+  const color = String(req.body?.color ?? '');
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return res.status(400).json({ error: 'Invalid color' });
+  await prisma.staffColor.upsert({
+    where: { staffId: user.staffId },
+    update: { color },
+    create: { staffId: user.staffId, color },
+  });
+  res.json({ color });
+}
+
+export async function getStaffColors(_req: Request, res: Response) {
+  const colors = await prisma.staffColor.findMany();
+  res.json(Object.fromEntries(colors.map(c => [c.staffId, c.color])));
 }
 
 export function logout(req: Request, res: Response) {

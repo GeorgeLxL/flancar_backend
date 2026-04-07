@@ -40,6 +40,7 @@ export async function syncProducts(accessToken: string) {
       .map((p: any) => ({
         productId: String(p.productId ?? p.productCode ?? ''),
         productName: String(p.productName ?? p.name ?? ''),
+        maker: String(p.productKana ?? ''),
         unitPrice: getProductUnitPrice(p),
       }))
       .filter(p => p.productId);
@@ -51,7 +52,7 @@ export async function syncProducts(accessToken: string) {
         batch.map(p =>
           prisma.product.upsert({
             where: { productId: p.productId },
-            update: { productName: p.productName, unitPrice: p.unitPrice },
+            update: { productName: p.productName, maker: p.maker, unitPrice: p.unitPrice },
             create: p,
           })
         )
