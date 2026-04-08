@@ -35,7 +35,7 @@ export async function syncProducts(accessToken: string) {
 
   // Sync categories first
   try {
-    const raw = await fetchAllPages<any>(api, `/${contractId}/pos/product_categories`);
+    const raw = await fetchAllPages<any>(api, `/${contractId}/pos/categories`);
     const categories = raw
       .map((c: any) => ({
         categoryId: String(c.categoryId ?? ''),
