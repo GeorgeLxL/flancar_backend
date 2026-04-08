@@ -17,17 +17,17 @@ enum ScheduleStatus {
 
 model Schedule {
   id           Int            @id @default(autoincrement())
-  title        String
-  carType      String
-  description  String?
-  startAt      DateTime
-  endAt        DateTime
-  customerId      String
-  customerName    String
-  staffId         String
-  staffName       String
-  customer        String
-  requester       String
+  title        String         @default("")
+  carType      String         @default("")
+  description  String?        @default("")
+  startAt      DateTime       @default(now())
+  endAt        DateTime       @default(now())
+  customerId   String         @default("")
+  customerName String         @default("")
+  staffId      String         @default("")
+  staffName    String         @default("")
+  customer     String         @default("")
+  requester    String         @default("")
   pdfNumber    String?        @unique
   status       ScheduleStatus @default(draft)
   createdAt    DateTime       @default(now())
@@ -38,21 +38,30 @@ model Schedule {
 model ScheduleItem {
   id          Int      @id @default(autoincrement())
   scheduleId  Int
-  productId   String
-  productName String
+  productId   String   @default("")
+  productName String   @default("")
   maker       String   @default("")
+  categoryId  String   @default("")
   unitPrice   Int      @default(0)
-  quantity    Int
+  quantity    Int      @default(1)
   schedule    Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  productId   String   @unique
-  productName String
-  maker       String   @default("")
-  unitPrice   Int      @default(0)
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  productId    String   @unique
+  productName  String
+  maker        String   @default("")
+  categoryId   String   @default("")
+  unitPrice    Int      @default(0)
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  categoryId   String   @unique
+  categoryName String
+  updatedAt    DateTime @updatedAt
 }
 
 model Customer {

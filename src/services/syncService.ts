@@ -33,6 +33,34 @@ export async function syncProducts(accessToken: string) {
   const contractId = process.env.SMAREGI_CONTRACT_ID!;
   const api = smaregiApi(accessToken);
 
+  // Sync categories first
+  try {
+    const raw = await fetchAllPages<any>(api, `/${contractId}/pos/product_categories`);
+    const categories = raw
+      .map((c: any) => ({
+        categoryId: String(c.categoryId ?? ''),
+        categoryName: String(c.categoryName ?? ''),
+      }))
+      .filter(c => c.categoryId);
+
+    const BATCH = 200;
+    for (let i = 0; i < categories.length; i += BATCH) {
+      const batch = categories.slice(i, i + BATCH);
+      await Promise.all(
+        batch.map(c =>
+          prisma.category.upsert({
+            where: { categoryId: c.categoryId },
+            update: { categoryName: c.categoryName },
+            create: c,
+          })
+        )
+      );
+    }
+    console.log(`Synced ${categories.length} categories`);
+  } catch (e) {
+    console.error('Failed to sync categories:', e);
+  }
+
   // Sync products
   try {
     const raw = await fetchAllPages<any>(api, `/${contractId}/pos/products`);
@@ -41,6 +69,7 @@ export async function syncProducts(accessToken: string) {
         productId: String(p.productId ?? p.productCode ?? ''),
         productName: String(p.productName ?? p.name ?? ''),
         maker: String(p.productKana ?? ''),
+        categoryId: String(p.categoryId ?? ''),
         unitPrice: getProductUnitPrice(p),
       }))
       .filter(p => p.productId);
@@ -52,7 +81,7 @@ export async function syncProducts(accessToken: string) {
         batch.map(p =>
           prisma.product.upsert({
             where: { productId: p.productId },
-            update: { productName: p.productName, maker: p.maker, unitPrice: p.unitPrice },
+            update: { productName: p.productName, maker: p.maker, categoryId: p.categoryId, unitPrice: p.unitPrice },
             create: p,
           })
         )
@@ -62,7 +91,6 @@ export async function syncProducts(accessToken: string) {
   } catch (e) {
     console.error('Failed to sync products:', e);
   }
-
 }
 
 export async function syncCustomers(accessToken: string) {

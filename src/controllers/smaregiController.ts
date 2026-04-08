@@ -90,9 +90,23 @@ export async function searchProducts(req: Request, res: Response) {
     where: q ? { productName: { contains: q, mode: 'insensitive' } } : {},
     orderBy: { productName: 'asc' },
     take: 50,
-    select: { productId: true, productName: true, maker: true, unitPrice: true },
+    select: { productId: true, productName: true, maker: true, categoryId: true, unitPrice: true },
   });
-  res.json(products);
+  const categoryIds = [...new Set(products.map(product => product.categoryId).filter(Boolean))];
+  const categories = categoryIds.length
+    ? await prisma.category.findMany({
+        where: { categoryId: { in: categoryIds } },
+        select: { categoryId: true, categoryName: true },
+      })
+    : [];
+  const categoryMap = new Map(categories.map(category => [category.categoryId, category.categoryName]));
+
+  res.json(
+    products.map(product => ({
+      ...product,
+      categoryName: categoryMap.get(product.categoryId) ?? '',
+    }))
+  );
 }
 
 export async function searchCustomers(req: Request, res: Response) {
