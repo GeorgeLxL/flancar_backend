@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { login, callback, me, logout, getColor, setColor, getStaffColors } from '../controllers/authController';
-import { requireAuth } from '../middleware/auth';
+import { login, callback, me, logout, getStaffColors, setStaffColor } from '../controllers/authController';
+import { requireAuth, requireRole } from '../middleware/auth';
 
 const router = Router();
 
@@ -8,8 +8,7 @@ router.post('/login', login);
 router.get('/callback', callback);
 router.get('/me', me);
 router.post('/logout', logout);
-router.get('/color', requireAuth, getColor);
-router.post('/color', requireAuth, setColor);
-router.get('/staff-colors', requireAuth, getStaffColors);
+router.get('/staff_colors', requireAuth, getStaffColors);
+router.put('/staff_colors/:staffId', requireRole('admin'), setStaffColor);
 
 export default router;
