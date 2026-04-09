@@ -24,7 +24,6 @@ model Schedule {
   endAt        DateTime       @default(now())
   customerId   String         @default("")
   customerName String         @default("")
-  creatorId    String         @default("")
   staffId      String         @default("")
   staffName    String         @default("")
   customer     String         @default("")

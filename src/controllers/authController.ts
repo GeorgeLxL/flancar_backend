@@ -85,24 +85,17 @@ export function me(req: Request, res: Response) {
   res.json(user);
 }
 
-export async function getColor(req: Request, res: Response) {
-  const user = (req.session as any).user;
-  if (!user) return res.status(401).json({ error: 'Not logged in' });
-  const record = await prisma.staffColor.findUnique({ where: { staffId: user.staffId } });
-  res.json({ color: record?.color ?? '#6b7280' });
-}
-
-export async function setColor(req: Request, res: Response) {
-  const user = (req.session as any).user;
-  if (!user) return res.status(401).json({ error: 'Not logged in' });
+export async function setStaffColor(req: Request, res: Response) {
+  const staffId = String(req.params.staffId ?? '');
   const color = String(req.body?.color ?? '');
+  if (!staffId) return res.status(400).json({ error: 'staffId is required' });
   if (!/^#[0-9a-fA-F]{6}$/.test(color)) return res.status(400).json({ error: 'Invalid color' });
   await prisma.staffColor.upsert({
-    where: { staffId: user.staffId },
+    where: { staffId },
     update: { color },
-    create: { staffId: user.staffId, color },
+    create: { staffId, color },
   });
-  res.json({ color });
+  res.json({ staffId, color });
 }
 
 export async function getStaffColors(_req: Request, res: Response) {
