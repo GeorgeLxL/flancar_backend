@@ -6,8 +6,9 @@ import prisma from '../prisma';
 async function ensureWorkerCanEdit(req: Request, scheduleId: number) {
   const user = (req.session as any).user;
   if (!user || user.roleId !== '3') return null;
-  const schedule = await prisma.schedule.findUnique({ where: { id: scheduleId }, select: { status: true } });
+  const schedule = await prisma.schedule.findUnique({ where: { id: scheduleId }, select: { status: true, creatorId: true } });
   if (!schedule) return { error: 'Not found', status: 404 as const };
+  if (schedule.creatorId !== user.staffId) return { error: 'Workers can only modify their own schedules', status: 403 as const };
   if (schedule.status !== 'draft') return { error: 'Workers can only modify draft schedules', status: 403 as const };
   return null;
 }
@@ -83,6 +84,7 @@ export async function getSchedule(req: Request, res: Response) {
 }
 
 export async function createSchedule(req: Request, res: Response) {
+  const user = (req.session as any).user;
   const { items, ...data } = req.body;
   const dateStr = format(new Date(), 'yyyyMMdd');
   const count = await prisma.schedule.count();
@@ -90,6 +92,7 @@ export async function createSchedule(req: Request, res: Response) {
   const schedule = await prisma.schedule.create({
     data: {
       ...data,
+      creatorId: user?.staffId ?? String(data.creatorId ?? ''),
       pdfNumber,
       startAt: data.startAt ? new Date(data.startAt) : new Date(),
       endAt: data.endAt ? new Date(data.endAt) : new Date(),
@@ -101,6 +104,11 @@ export async function createSchedule(req: Request, res: Response) {
 }
 
 export async function updateSchedule(req: Request, res: Response) {
+  const user = (req.session as any).user;
+  const incomingCreatorId = String(req.body?.creatorId ?? '');
+  if (user?.roleId === '3' && incomingCreatorId !== user.staffId) {
+    return res.status(403).json({ error: 'Workers can only update their own schedules' });
+  }
   const guard = await ensureWorkerCanEdit(req, Number(req.params.id));
   if (guard) return res.status(guard.status).json({ error: guard.error });
   const { items, ...data } = req.body;
