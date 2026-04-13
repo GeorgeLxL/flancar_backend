@@ -103,7 +103,7 @@ export async function syncCustomers(accessToken: string) {
     const customers = raw
       .map((c: any) => ({
         customerId: String(c.customerId ?? c.memberNo ?? ''),
-        customerName: String(`${c.lastName} ${c.firstName}` ? `${c.lastName} ${c.firstName}` : c.customerName ?? c.name ?? ''),
+        customerName: String(c.companyName ?? `${c.lastName} ${c.firstName}` ? `${c.lastName} ${c.firstName}` : c.customerName ?? c.name ?? ''),
       }))
       .filter(c => c.customerId);
 
