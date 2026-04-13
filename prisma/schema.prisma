@@ -28,6 +28,7 @@ model Schedule {
   staffName    String         @default("")
   customer     String         @default("")
   requester    String         @default("")
+  showComiPack Boolean        @default(false)
   pdfNumber    String?        @unique
   status       ScheduleStatus @default(draft)
   createdAt    DateTime       @default(now())
