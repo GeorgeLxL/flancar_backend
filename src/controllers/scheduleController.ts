@@ -85,9 +85,10 @@ export async function getSchedule(req: Request, res: Response) {
 
 export async function createSchedule(req: Request, res: Response) {
   const { items, ...data } = req.body;
-  const dateStr = format(new Date(), 'yyyyMMdd');
-  const count = await prisma.schedule.count();
-  const pdfNumber = `${dateStr}${String(count + 1).padStart(3, '0')}`;
+  const dateStr = format(new Date(), 'MMdd');
+  const maxIdResult = await prisma.schedule.findFirst({ orderBy: { id: 'desc' }, select: { id: true } });
+  const maxId = maxIdResult ? maxIdResult.id : 0;
+  const pdfNumber = `${dateStr}${String(maxId + 1).padStart(3, '0')}`;
   const schedule = await prisma.schedule.create({
     data: {
       ...data,
