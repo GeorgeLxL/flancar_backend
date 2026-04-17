@@ -16,12 +16,27 @@ async function ensureWorkerCanEdit(req: Request, scheduleId: number) {
 function sanitizeItems(items: any[]) {
   return (items || []).map((item: any) => ({
     productId: item.productId,
-    productName: item.productName,
-    maker: item.maker ?? '',
     categoryId: item.categoryId ?? '',
     unitPrice: Number(item.unitPrice) || 0,
     quantity: item.quantity,
   }));
+}
+
+function sanitizeSchedule(data: any) {
+  return {
+    title: data.title ?? '',
+    carType: data.carType ?? '',
+    description: data.description ?? '',
+    startAt: data.startAt,
+    endAt: data.endAt,
+    customerId: data.customerId ?? '',
+    staffId: data.staffId ?? '',
+    staffName: data.staffName ?? '',
+    customer: data.customer ?? '',
+    requester: data.requester ?? '',
+    showComiPack: data.showComiPack ?? false,
+    status: data.status ?? 'draft',
+  };
 }
 
 export async function searchSchedules(req: Request, res: Response) {
@@ -31,24 +46,43 @@ export async function searchSchedules(req: Request, res: Response) {
     where: {
       OR: [
         { title: { contains: q, mode: 'insensitive' } },
-        { customerName: { contains: q, mode: 'insensitive' } },
+        { customerData: { customerName: { contains: q, mode: 'insensitive' } } },
         { customer: { contains: q, mode: 'insensitive' } },
         { staffName: { contains: q, mode: 'insensitive' } },
         { requester: { contains: q, mode: 'insensitive' } },
         { carType: { contains: q, mode: 'insensitive' } },
-        { items: { some: { productName: { contains: q, mode: 'insensitive' } } } },
+        { items: { some: { product: { productName: { contains: q, mode: 'insensitive' } } } } },
       ],
     },
     orderBy: { startAt: 'asc' },
     take: 50,
-    include: { items: true },
+    include: { items: { include: { product: true } }, customerData: true },
   });
-  res.json(schedules);
+  res.json(schedules.map(schedule => ({
+    ...schedule,
+    customerName: schedule.customerData?.customerName ?? '',
+    items: schedule.items.map(item => ({
+      ...item,
+      productName: item.product?.productName ?? '',
+      maker: item.product?.maker ?? '',
+    })),
+  })));
 }
 
 export async function listSchedules(_req: Request, res: Response) {
-  const schedules = await prisma.schedule.findMany({ include: { items: true }, orderBy: { startAt: 'desc' } });
-  res.json(schedules);
+  const schedules = await prisma.schedule.findMany({ 
+    include: { items: { include: { product: true } }, customerData: true }, 
+    orderBy: { startAt: 'desc' } 
+  });
+  res.json(schedules.map(schedule => ({
+    ...schedule,
+    customerName: schedule.customerData?.customerName ?? '',
+    items: schedule.items.map(item => ({
+      ...item,
+      productName: item.product?.productName ?? '',
+      maker: item.product?.maker ?? '',
+    })),
+  })));
 }
 
 export async function listSchedulesByRange(req: Request, res: Response) {
@@ -65,26 +99,44 @@ export async function listSchedulesByRange(req: Request, res: Response) {
         { startAt: { lte: fromDate }, endAt: { gte: toDate } },
       ],
     },
-    include: { items: true },
+    include: { items: { include: { product: true } }, customerData: true },
     orderBy: { startAt: 'asc' },
   });
-  res.json(schedules);
+  res.json(schedules.map(schedule => ({
+    ...schedule,
+    customerName: schedule.customerData?.customerName ?? '',
+    items: schedule.items.map(item => ({
+      ...item,
+      productName: item.product?.productName ?? '',
+      maker: item.product?.maker ?? '',
+    })),
+  })));
 }
 
 export async function getSchedule(req: Request, res: Response) {
-  const schedule = await prisma.schedule.findUnique({ where: { id: Number(req.params.id) }, include: { items: true } });
+  const schedule = await prisma.schedule.findUnique({ 
+    where: { id: Number(req.params.id) }, 
+    include: { items: { include: { product: true } }, customerData: true } 
+  });
   if (!schedule) return res.status(404).json({ error: 'Not found' });
   const categoryIds = [...new Set(schedule.items.map(i => i.categoryId).filter(Boolean))];
   const categories = categoryIds.length ? await prisma.category.findMany({ where: { categoryId: { in: categoryIds } } }) : [];
   const categoryMap = new Map(categories.map(c => [c.categoryId, c.categoryName]));
   res.json({
     ...schedule,
-    items: schedule.items.map(item => ({ ...item, categoryName: categoryMap.get(item.categoryId) ?? '' })),
+    customerName: schedule.customerData?.customerName ?? '',
+    items: schedule.items.map(item => ({ 
+      ...item, 
+      categoryName: categoryMap.get(item.categoryId) ?? '',
+      productName: item.product?.productName ?? '',
+      maker: item.product?.maker ?? '',
+    })),
   });
 }
 
 export async function createSchedule(req: Request, res: Response) {
-  const { items, ...data } = req.body;
+  const { items, ...rawData } = req.body;
+  const data = sanitizeSchedule(rawData);
   const dateStr = format(new Date(), 'MMdd');
   const maxIdResult = await prisma.schedule.findFirst({ orderBy: { id: 'desc' }, select: { id: true } });
   const maxId = maxIdResult ? maxIdResult.id : 0;
@@ -97,15 +149,24 @@ export async function createSchedule(req: Request, res: Response) {
       endAt: data.endAt ? new Date(data.endAt) : new Date(),
       items: { create: sanitizeItems(items) },
     },
-    include: { items: true },
+    include: { items: { include: { product: true } }, customerData: true },
   });
-  res.status(201).json(schedule);
+  res.status(201).json({
+    ...schedule,
+    customerName: schedule.customerData?.customerName ?? '',
+    items: schedule.items.map(item => ({
+      ...item,
+      productName: item.product?.productName ?? '',
+      maker: item.product?.maker ?? '',
+    })),
+  });
 }
 
 export async function updateSchedule(req: Request, res: Response) {
   const guard = await ensureWorkerCanEdit(req, Number(req.params.id));
   if (guard) return res.status(guard.status).json({ error: guard.error });
-  const { items, ...data } = req.body;
+  const { items, ...rawData } = req.body;
+  const data = sanitizeSchedule(rawData);
   const schedule = await prisma.schedule.update({
     where: { id: Number(req.params.id) },
     data: {
@@ -114,9 +175,17 @@ export async function updateSchedule(req: Request, res: Response) {
       endAt: data.endAt ? new Date(data.endAt) : new Date(),
       items: { deleteMany: {}, create: sanitizeItems(items) },
     },
-    include: { items: true },
+    include: { items: { include: { product: true } }, customerData: true },
   });
-  res.json(schedule);
+  res.json({
+    ...schedule,
+    customerName: schedule.customerData?.customerName ?? '',
+    items: schedule.items.map(item => ({
+      ...item,
+      productName: item.product?.productName ?? '',
+      maker: item.product?.maker ?? '',
+    })),
+  });
 }
 
 export async function deleteSchedule(req: Request, res: Response) {
@@ -134,7 +203,15 @@ export async function updateScheduleStatus(req: Request, res: Response) {
   const schedule = await prisma.schedule.update({
     where: { id: Number(req.params.id) },
     data: { status: status as ScheduleStatus },
-    include: { items: true },
+    include: { items: { include: { product: true } }, customerData: true },
   });
-  res.json(schedule);
+  res.json({
+    ...schedule,
+    customerName: schedule.customerData?.customerName ?? '',
+    items: schedule.items.map(item => ({
+      ...item,
+      productName: item.product?.productName ?? '',
+      maker: item.product?.maker ?? '',
+    })),
+  });
 }
