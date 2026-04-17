@@ -23,7 +23,6 @@ model Schedule {
   startAt      DateTime       @default(now())
   endAt        DateTime       @default(now())
   customerId   String         @default("")
-  customerName String         @default("")
   staffId      String         @default("")
   staffName    String         @default("")
   customer     String         @default("")
@@ -34,18 +33,18 @@ model Schedule {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   items        ScheduleItem[]
+  customerData Customer       @relation(fields: [customerId], references: [customerId])
 }
 
 model ScheduleItem {
   id          Int      @id @default(autoincrement())
   scheduleId  Int
   productId   String   @default("")
-  productName String   @default("")
-  maker       String   @default("")
   categoryId  String   @default("")
   unitPrice   Int      @default(0)
   quantity    Int      @default(1)
   schedule    Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [productId])
 }
 
 model Product {
@@ -56,6 +55,7 @@ model Product {
   categoryId   String   @default("")
   unitPrice    Int      @default(0)
   updatedAt    DateTime @updatedAt
+  scheduleItems ScheduleItem[]
 }
 
 model Category {
@@ -70,6 +70,7 @@ model Customer {
   customerId   String   @unique
   customerName String
   updatedAt    DateTime @updatedAt
+  schedules    Schedule[]
 }
 
 model StaffColor {
