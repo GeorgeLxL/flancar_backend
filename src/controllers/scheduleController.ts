@@ -22,6 +22,23 @@ function sanitizeItems(items: any[]) {
   }));
 }
 
+function sanitizeSchedule(data: any) {
+  return {
+    title: data.title ?? '',
+    carType: data.carType ?? '',
+    description: data.description ?? '',
+    startAt: data.startAt,
+    endAt: data.endAt,
+    customerId: data.customerId ?? '',
+    staffId: data.staffId ?? '',
+    staffName: data.staffName ?? '',
+    customer: data.customer ?? '',
+    requester: data.requester ?? '',
+    showComiPack: data.showComiPack ?? false,
+    status: data.status ?? 'draft',
+  };
+}
+
 export async function searchSchedules(req: Request, res: Response) {
   const q = String(req.query.q ?? '').trim();
   if (!q) return res.json([]);
@@ -118,7 +135,8 @@ export async function getSchedule(req: Request, res: Response) {
 }
 
 export async function createSchedule(req: Request, res: Response) {
-  const { items, ...data } = req.body;
+  const { items, ...rawData } = req.body;
+  const data = sanitizeSchedule(rawData);
   const dateStr = format(new Date(), 'MMdd');
   const maxIdResult = await prisma.schedule.findFirst({ orderBy: { id: 'desc' }, select: { id: true } });
   const maxId = maxIdResult ? maxIdResult.id : 0;
@@ -147,7 +165,8 @@ export async function createSchedule(req: Request, res: Response) {
 export async function updateSchedule(req: Request, res: Response) {
   const guard = await ensureWorkerCanEdit(req, Number(req.params.id));
   if (guard) return res.status(guard.status).json({ error: guard.error });
-  const { items, ...data } = req.body;
+  const { items, ...rawData } = req.body;
+  const data = sanitizeSchedule(rawData);
   const schedule = await prisma.schedule.update({
     where: { id: Number(req.params.id) },
     data: {
