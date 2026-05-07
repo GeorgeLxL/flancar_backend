@@ -138,9 +138,15 @@ export async function createSchedule(req: Request, res: Response) {
   const { items, ...rawData } = req.body;
   const data = sanitizeSchedule(rawData);
   const dateStr = format(new Date(), 'MMdd');
-  const maxIdResult = await prisma.schedule.findFirst({ orderBy: { id: 'desc' }, select: { id: true } });
-  const maxId = maxIdResult ? maxIdResult.id : 0;
-  const pdfNumber = `${dateStr}${String(maxId + 1).padStart(3, '0')}`;
+  const latestTodaySchedule = await prisma.schedule.findFirst({
+    where: { pdfNumber: { startsWith: dateStr } },
+    orderBy: { pdfNumber: 'desc' },
+    select: { pdfNumber: true },
+  });
+  const latestTodayNumber = latestTodaySchedule?.pdfNumber
+    ? Number(latestTodaySchedule.pdfNumber.slice(dateStr.length))
+    : 0;
+  const pdfNumber = `${dateStr}${String(latestTodayNumber + 1).padStart(3, '0')}`;
   const schedule = await prisma.schedule.create({
     data: {
       ...data,
